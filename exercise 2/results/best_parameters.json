@@ -1,0 +1,6 @@
+{
+  "batch_size": 106,
+  "num_filters": 17,
+  "filter_size": 5,
+  "lr": 0.0024045739453498866
+}
