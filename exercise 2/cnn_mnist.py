@@ -116,8 +116,7 @@ def train_and_validate(x_train, y_train, x_valid, y_valid, num_epochs, lr, num_f
 
     cross_entropy = -tf.reduce_sum(y_*tf.log(y_conv))
     train_step = tf.train.GradientDescentOptimizer(lr).minimize(cross_entropy)
-    correct_prediction = tf.equal(tf.argmax(y_conv,1), tf.argmax(y_,1))
-    accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name='accuracy')  
+    correct_prediction = tf.equal(tf.argmax(y_conv,1), tf.argmax(y_,1))  
 
     saver = tf.train.Saver()
 
@@ -131,6 +130,7 @@ def train_and_validate(x_train, y_train, x_valid, y_valid, num_epochs, lr, num_f
     with tf.Session() as sess:
 
         sess.run(tf.global_variables_initializer())
+        accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name='accuracy')
         for i in range(num_epochs):
             for b in range(n_batches):
                 x_batch = X_split[b]
@@ -150,18 +150,19 @@ def train_and_validate(x_train, y_train, x_valid, y_valid, num_epochs, lr, num_f
 def test(x_test, y_test, model):
     # TODO: test your network here by evaluating it on the test data
     tf.reset_default_graph()
-    graph = tf.get_default_graph()
+    graph = tf.Graph()
+    with tf.Session(graph=graph) as sess:
+        saver = tf.train.import_meta_graph(model + '.meta')
+        saver.restore(sess, model)
     
-    saver = tf.train.Saver()
-    saver.restore(sess, model)
-    
-    accuracy = graph.get_tensor_by_name('accuracy:0')
-    x_image = graph.get_tensor_by_name('x:0')
-    y_ = graph.get_tensor_by_name('y_:0')
-    y_conv = graph.get_tensor_by_name('y_conv:0')
-    keep_prob = graph.get_tensor_by_name('keep:0')
-    print("Test accuracy is: %g" %accuracy.eval(feed_dict={x_image: x_test, y_: y_test, keep_prob: 1.0}))
-    return 1-accuracy.eval(feed_dict={x_image: x_test, y_: y_test, keep_prob: 1.0})
+        accuracy = graph.get_tensor_by_name('accuracy:0')
+        x_image = graph.get_tensor_by_name('x:0')
+        y_ = graph.get_tensor_by_name('y_:0')
+        y_conv = graph.get_tensor_by_name('y_conv:0')
+        keep_prob = graph.get_tensor_by_name('keep:0')
+        print("Test accuracy is: %g" %accuracy.eval(feed_dict={x_image: x_test, y_: y_test, keep_prob: 1.0}))
+        error = 1-accuracy.eval(feed_dict={x_image: x_test, y_: y_test, keep_prob: 1.0})
+    return error
 
 
 if __name__ == "__main__":
