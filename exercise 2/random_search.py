@@ -217,7 +217,7 @@ lr = id2config[incumbent]['config']["learning_rate"]
 num_filters = int(id2config[incumbent]['config']["num_filters"])
 batch_size = int(id2config[incumbent]['config']["batch_size"])
 filter_size = int(id2config[incumbent]['config']["filter_size"])
-epochs=12
+epochs=6
 
 print(lr)
 print(num_filters)
