@@ -64,6 +64,7 @@ class NeuralNetwork():
         """
         feed_dict = { self.states_: states, self.targets_: targets, self.actions_: actions}
         _, loss = sess.run([self.train_op, self.loss], feed_dict)
+
         return loss
 
 
