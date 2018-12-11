@@ -15,11 +15,19 @@ if __name__ == "__main__":
 
     # TODO: load DQN agent
     # ...
- 
+    state_dim = env.observation_space.shape[0]
+    num_actions = env.action_space.n
+
+    Q = NeuralNetwork(state_dim, num_actions)
+    Q_target = TargetNetwork(state_dim, num_actions)
+    agent = DQNAgent(Q, Q_target, num_actions)
+    agent.load(os.path.join("./models_cartpole/", "dqn_agent.ckpt"))
+
     n_test_episodes = 15
 
     episode_rewards = []
     for i in range(n_test_episodes):
+        print(i)
         stats = run_episode(env, agent, deterministic=True, do_training=False, rendering=True)
         episode_rewards.append(stats.episode_reward)
 
@@ -28,14 +36,13 @@ if __name__ == "__main__":
     results["episode_rewards"] = episode_rewards
     results["mean"] = np.array(episode_rewards).mean()
     results["std"] = np.array(episode_rewards).std()
- 
+
     if not os.path.exists("./results"):
-        os.mkdir("./results")  
+        os.mkdir("./results")
 
     fname = "./results/cartpole_results_dqn-%s.json" % datetime.now().strftime("%Y%m%d-%H%M%S")
     fh = open(fname, "w")
     json.dump(results, fh)
-            
+
     env.close()
     print('... finished')
-

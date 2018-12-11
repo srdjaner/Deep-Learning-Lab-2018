@@ -9,7 +9,7 @@ class NeuralNetwork():
     """
     def __init__(self, state_dim, num_actions, hidden=20, lr=1e-4):
         self._build_model(state_dim, num_actions, hidden, lr)
-        
+
     def _build_model(self, state_dim, num_actions, hidden, lr):
         """
         This method creates a neural network with two hidden fully connected layers and 20 neurons each. The output layer
@@ -55,7 +55,7 @@ class NeuralNetwork():
         """
         Updates the weights of the neural network, based on its targets, its
         predictions, its loss and its optimizer.
-        
+
         Args:
           sess: TensorFlow session.
           states: [current_state] or states of batch
@@ -73,7 +73,7 @@ class TargetNetwork(NeuralNetwork):
     it is always set to the values of its associate.
     """
     def __init__(self, state_dim, num_actions, hidden=20, lr=1e-4, tau=0.01):
-        MLP.__init__(self, state_dim, num_actions, hidden, lr)
+        super().__init__(state_dim, num_actions, hidden, lr)
         self.tau = tau
         self._associate = self._register_associate()
 
@@ -85,7 +85,7 @@ class TargetNetwork(NeuralNetwork):
             op_holder.append(tf_vars[idx+total_vars//2].assign(
               (var.value()*self.tau) + ((1-self.tau)*tf_vars[idx+total_vars//2].value())))
         return op_holder
-      
+
     def update(self, sess):
         for op in self._associate:
           sess.run(op)
