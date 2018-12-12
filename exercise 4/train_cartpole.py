@@ -53,7 +53,7 @@ def train_online(env, agent, num_episodes, model_dir="./models_cartpole", tensor
     for i in range(num_episodes):
         print("episode: ",i)
         stats_training = run_episode(env, agent, deterministic=False, do_training=True)
-        if i % 1 == 0:
+        if i % 10 == 0:
             #stats_eval = run_episode(env, agent, deterministic=True, do_training=False)
             tensorboard.write_episode_data(i, eval_dict={  "episode_reward" : stats_training.episode_reward,
                                                                 "a_0" : stats_training.get_action_usage(0),
@@ -72,7 +72,9 @@ def train_online(env, agent, num_episodes, model_dir="./models_cartpole", tensor
 
 if __name__ == "__main__":
 
-    env = gym.make("CartPole-v0").unwrapped
+    environment = "CartPole-v0"
+    # environment = "MountainCar-v0"
+    env = gym.make(environment).unwrapped
 
     state_dim = env.observation_space.shape[0]
     num_actions = env.action_space.n

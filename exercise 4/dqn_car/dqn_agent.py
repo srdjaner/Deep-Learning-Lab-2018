@@ -76,21 +76,10 @@ class DQNAgent:
         """
         r = np.random.uniform()
         if deterministic or r > self.epsilon:
-            # TODO: take greedy action (argmax)
-            #state = np.reshape(state, (1,4))
-            act_values = self.Q.predict(self.sess, [state]) #it was q target
-            # we should be using act_values[0], i guess
-            # print("act values: ", act_values)             # act values:  [[0.05641035 0.06138265]]
-            # print("act values[0]: ", act_values[0])       # act values[0]:  [0.05641035 0.06138265]
-
+            act_values = self.Q.predict(self.sess, [state])
             action_id = np.argmax(act_values[0])
-
-            #print("predicted action. deterministic: {}. epsilon cond: {}. action_id: {}."
-                    #.format(deterministic, (r > self.epsilon), action_id))
         else:
-            action_id = random.randrange(self.num_actions)
-            #print("random action. deterministic: {}. epsilon cond.: {}. action_id: {}."
-                    #.format(deterministic, (r > self.epsilon), action_id))
+            action_id = uniform_sampling(self.replay_buffer.states, self.replay_buffer.actions, 1)
             # TODO: sample random action
             # Hint for the exploration in CarRacing: sampling the action from a uniform distribution will probably not work.
             # You can sample the agents actions with different probabilities (need to sum up to 1) so that the agent will prefer to accelerate or going straight.
@@ -101,3 +90,23 @@ class DQNAgent:
 
     def load(self, file_name):
         self.saver.restore(self.sess, file_name)
+
+    def uniform_sampling(X_train, y_train_id_n, number):
+
+        n = X_train.shape[0]
+        weights = np.zeros(n)
+        left_indices = y_train_id_n == 1
+        weights[left_indices] = n / np.sum(left_indices)
+        right_indices = y_train_id_n == 2
+        weights[right_indices] = n / np.sum(right_indices)
+        straight_indices = y_train_id_n == 0
+        weights[straight_indices] = n / np.sum(straight_indices)
+        acce_indices = y_train_id_n == 3
+        weights[acce_indices] = n / np.sum(acce_indices)
+        brake_indices = y_train_id_n == 4
+        weights[brake_indices] = n / np.sum(brake_indices)
+
+        weights = weights / np.sum(weights)
+        samples_indices = np.random.choice(np.arange(n), number, replace=False, p=weights)
+
+        return samples_indices
