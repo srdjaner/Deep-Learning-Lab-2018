@@ -13,7 +13,7 @@ class ReplayBuffer:
 
     def __init__(self):
 
-        self.deque_size = 2000
+        self.deque_size = 100000
         self._data = namedtuple("ReplayBuffer", ["states", "actions", "next_states", "rewards", "dones"])
         self._data = self._data(states=deque([], maxlen=self.deque_size), actions=deque([], maxlen=self.deque_size),
                                 next_states=deque([], maxlen=self.deque_size), rewards=deque([], maxlen=self.deque_size),

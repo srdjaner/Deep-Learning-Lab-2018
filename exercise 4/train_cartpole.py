@@ -22,6 +22,7 @@ def run_episode(env, agent, deterministic, do_training=True, rendering=False, ma
 
         action_id = agent.act(state=state, deterministic=deterministic)
         next_state, reward, terminal, info = env.step(action_id)
+        reward = reward if not terminal else -10 # I added
 
         if do_training:
             agent.train(state, action_id, next_state, reward, terminal)
@@ -37,7 +38,7 @@ def run_episode(env, agent, deterministic, do_training=True, rendering=False, ma
             break
 
         step += 1
-
+    print("Episodes before terminal: ", step)
     return stats
 
 def train_online(env, agent, num_episodes, model_dir="./models_cartpole", tensorboard_dir="./tensorboard"):
@@ -53,7 +54,7 @@ def train_online(env, agent, num_episodes, model_dir="./models_cartpole", tensor
         print("episode: ",i)
         stats_training = run_episode(env, agent, deterministic=False, do_training=True)
         if i % 1 == 0:
-            #stats_eval = run_episode(env, agent, deterministic=False, do_training=False)
+            #stats_eval = run_episode(env, agent, deterministic=True, do_training=False)
             tensorboard.write_episode_data(i, eval_dict={  "episode_reward" : stats_training.episode_reward,
                                                                 "a_0" : stats_training.get_action_usage(0),
                                                                 "a_1" : stats_training.get_action_usage(1)})
@@ -75,7 +76,7 @@ if __name__ == "__main__":
 
     state_dim = env.observation_space.shape[0]
     num_actions = env.action_space.n
-    num_episodes = 1000
+    num_episodes = 100
 
     Q = NeuralNetwork(state_dim, num_actions)
     Q_target = TargetNetwork(state_dim, num_actions)

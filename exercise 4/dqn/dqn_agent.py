@@ -5,7 +5,7 @@ import random
 
 class DQNAgent:
 
-    def __init__(self, Q, Q_target, num_actions, discount_factor=0.99, batch_size=64, epsilon=1):
+    def __init__(self, Q, Q_target, num_actions, discount_factor=0.95, batch_size=64, epsilon=1):
         """
          Q-Learning agent for off-policy TD control using Function Approximation.
          Finds the optimal greedy policy while following an epsilon-greedy policy.
@@ -22,7 +22,7 @@ class DQNAgent:
         self.Q_target = Q_target
 
         self.epsilon = epsilon
-        self.epsilon_decay = 0.99995
+        self.epsilon_decay = 0.995
         self.epsilon_min = 0.01
 
         self.num_actions = num_actions
@@ -49,15 +49,29 @@ class DQNAgent:
         self.replay_buffer.add_transition(state, action, next_state, reward, terminal)
         # 2. sample next batch and perform batch update:
         batch_states, batch_actions, batch_next_states, batch_rewards, batch_dones = self.replay_buffer.next_batch(self.batch_size)
+        for i in range(self.batch_size):
+            # print("next state: ", batch_next_states[i])
+            td_target = batch_rewards[i]
+            if not batch_dones[i]:
+                td_target = batch_rewards[i] + self.discount_factor * np.amax(self.Q_target.predict(self.sess, [batch_next_states[i]]))
+            target_f = self.Q_target.predict(self.sess, [batch_states[i]])
+            # print("td target: ", td_target)
+            #print(target_f)
+            #print(target_f[0])
+            target_f[0][batch_actions[i]] = td_target
+
+            #print(target_f.shape)
         #       2.1 compute td targets:
-        td_targets =  batch_rewards + self.discount_factor * np.amax(self.Q_target.predict(self.sess, batch_next_states), axis=1)
-        print("td_targets shape: ", td_targets.shape)
-        print("amax: ", np.amax(self.Q_target.predict(self.sess, batch_next_states)))
+        #bb = np.amax(self.Q_target.predict(self.sess, batch_next_states), axis=1)
+        #print(bb)
+        #td_targets =  batch_rewards + self.discount_factor * bb
+
+        #print("amax: ", np.amax(self.Q_target.predict(self.sess, batch_next_states)))
         #       2.2 update the Q network
-        loss = self.Q.update(self.sess, batch_states, batch_actions, td_targets)
+            loss = self.Q.update(self.sess, [batch_states[i]], [batch_actions[i]], target_f[0]) #td_targets)
         # print("loss Q net: ", loss)
         #       2.3 call soft update for target network
-        self.Q_target.update(self.sess)
+            self.Q_target.update(self.sess)
         #print("loss:", loss)
         if self.epsilon > self.epsilon_min:
            self.epsilon *= self.epsilon_decay
@@ -84,12 +98,12 @@ class DQNAgent:
 
             action_id = np.argmax(act_values[0])
 
-            print("predicted action. deterministic: {}. epsilon cond.: {}. action_id: {}."
-                    .format(deterministic, (r > self.epsilon), action_id))
+            #print("predicted action. deterministic: {}. epsilon cond: {}. action_id: {}."
+                    #.format(deterministic, (r > self.epsilon), action_id))
         else:
             action_id = random.randrange(self.num_actions)
-            print("random action. deterministic: {}. epsilon cond.: {}. action_id: {}."
-                    .format(deterministic, (r > self.epsilon), action_id))
+            #print("random action. deterministic: {}. epsilon cond.: {}. action_id: {}."
+                    #.format(deterministic, (r > self.epsilon), action_id))
             # TODO: sample random action
             # Hint for the exploration in CarRacing: sampling the action from a uniform distribution will probably not work.
             # You can sample the agents actions with different probabilities (need to sum up to 1) so that the agent will prefer to accelerate or going straight.
