@@ -51,8 +51,8 @@ class DQNAgent:
         batch_states, batch_actions, batch_next_states, batch_rewards, batch_dones = self.replay_buffer.next_batch(self.batch_size)
         #       2.1 compute td targets:
         td_targets =  batch_rewards + self.discount_factor * np.amax(self.Q_target.predict(self.sess, batch_next_states), axis=1)
-        print("td_targets shape: ", td_targets.shape)
-        print("amax: ", np.amax(self.Q_target.predict(self.sess, batch_next_states)))
+        # print("td_targets shape: ", td_targets.shape)
+        # print("amax: ", np.amax(self.Q_target.predict(self.sess, batch_next_states)))
         #       2.2 update the Q network
         loss = self.Q.update(self.sess, batch_states, batch_actions, td_targets)
         # print("loss Q net: ", loss)

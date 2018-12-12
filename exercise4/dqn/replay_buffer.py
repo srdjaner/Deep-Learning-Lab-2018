@@ -13,10 +13,11 @@ class ReplayBuffer:
 
     def __init__(self):
 
+        self.deque_size = 2000
         self._data = namedtuple("ReplayBuffer", ["states", "actions", "next_states", "rewards", "dones"])
-        self._data = self._data(states=deque([], maxlen=100000), actions=deque([], maxlen=100000),
-                                next_states=deque([], maxlen=100000), rewards=deque([], maxlen=100000),
-                                dones=deque([], maxlen=100000))
+        self._data = self._data(states=deque([], maxlen=self.deque_size), actions=deque([], maxlen=self.deque_size),
+                                next_states=deque([], maxlen=self.deque_size), rewards=deque([], maxlen=self.deque_size),
+                                dones=deque([], maxlen=self.deque_size))
 
     def add_transition(self, state, action, next_state, reward, done): #this is remember
         """

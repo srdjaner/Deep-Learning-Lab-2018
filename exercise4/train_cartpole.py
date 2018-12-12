@@ -7,7 +7,7 @@ from dqn.networks import NeuralNetwork, TargetNetwork
 from utils import EpisodeStats
 
 
-def run_episode(env, agent, deterministic, do_training=True, rendering=True, max_timesteps=1000):
+def run_episode(env, agent, deterministic, do_training=True, rendering=False, max_timesteps=1000):
     """
     This methods runs one episode for a gym environment.
     deterministic == True => agent executes only greedy actions according the Q function approximator (no random actions).
@@ -52,7 +52,7 @@ def train_online(env, agent, num_episodes, model_dir="./models_cartpole", tensor
     for i in range(num_episodes):
         print("episode: ",i)
         stats_training = run_episode(env, agent, deterministic=False, do_training=True)
-        if i%1==0:
+        if i % 1 == 0:
             #stats_eval = run_episode(env, agent, deterministic=False, do_training=False)
             tensorboard.write_episode_data(i, eval_dict={  "episode_reward" : stats_training.episode_reward,
                                                                 "a_0" : stats_training.get_action_usage(0),
