@@ -1,5 +1,5 @@
 from __future__ import print_function
-
+import os
 import gym
 from dqn_car.dqn_agent import DQNAgent
 from train_carracing import run_episode
@@ -17,7 +17,7 @@ if __name__ == "__main__":
     #TODO: Define networks and load agent
     # ....
     state_dim = env.observation_space.shape[0]
-    num_actions = env.action_space.n
+    num_actions = 5
 
     Q = NeuralNetwork(state_dim, num_actions)
     Q_target = TargetNetwork(state_dim, num_actions)
