@@ -22,8 +22,8 @@ class DQNAgent:
         self.Q_target = Q_target
 
         self.epsilon = epsilon
-        self.epsilon_decay = 0.995
-        self.epsilon_min = 0.05
+        self.epsilon_decay = 0.99995
+        self.epsilon_min = 0.01
 
         self.num_actions = num_actions
         self.batch_size = batch_size
@@ -51,6 +51,8 @@ class DQNAgent:
         batch_states, batch_actions, batch_next_states, batch_rewards, batch_dones = self.replay_buffer.next_batch(self.batch_size)
         #       2.1 compute td targets:
         td_targets =  batch_rewards + self.discount_factor * np.amax(self.Q_target.predict(self.sess, batch_next_states), axis=1)
+        print("td_targets shape: ", td_targets.shape)
+        print("amax: ", np.amax(self.Q_target.predict(self.sess, batch_next_states)))
         #       2.2 update the Q network
         loss = self.Q.update(self.sess, batch_states, batch_actions, td_targets)
         # print("loss Q net: ", loss)
@@ -82,10 +84,12 @@ class DQNAgent:
 
             action_id = np.argmax(act_values[0])
 
-            # print("I predicted an action.")
+            print("predicted action. deterministic: {}. epsilon cond.: {}. action_id: {}."
+                    .format(deterministic, (r > self.epsilon), action_id))
         else:
             action_id = random.randrange(self.num_actions)
-            # print("I did a random action.")
+            print("random action. deterministic: {}. epsilon cond.: {}. action_id: {}."
+                    .format(deterministic, (r > self.epsilon), action_id))
             # TODO: sample random action
             # Hint for the exploration in CarRacing: sampling the action from a uniform distribution will probably not work.
             # You can sample the agents actions with different probabilities (need to sum up to 1) so that the agent will prefer to accelerate or going straight.
