@@ -7,10 +7,10 @@ class NeuralNetwork():
     """
     Neural Network class based on TensorFlow.
     """
-    def __init__(self, state_dim, num_actions, num_filters=32, filter_size=5, lr=1e-4, history_length=0):
-        self._build_model(state_dim, num_actions, num_filters, filter_size, lr, history_length)
+    def __init__(self, state_dim, num_actions, history_length, lr=1e-4):
+        self._build_model(state_dim, num_actions, lr, history_length)
 
-    def _build_model(self, state_dim, num_actions, num_filters, filter_size, lr, history_length):
+    def _build_model(self, state_dim, num_actions, lr, history_length):
         """
         This method creates a neural network with two hidden fully connected layers and 20 neurons each. The output layer
         has #a neurons, where #a is the number of actions and has linear activation.
@@ -28,21 +28,35 @@ class NeuralNetwork():
 
         h_conv1 = tf.layers.conv2d(
             inputs=self.states_,
-            filters=8,
-            kernel_size=[7, 7],
-            strides=[3, 3],
-            padding="VALID",
-            activation=tf.nn.relu)
-
-        h_conv2 = tf.layers.conv2d(
-            inputs=h_conv1,
             filters=16,
-            kernel_size=[3, 3],
+            kernel_size=[7, 7],
             strides=[2, 2],
             padding="VALID",
             activation=tf.nn.relu)
 
-        h_conv2_flat = tf.contrib.layers.flatten(h_conv2)
+        pool_1 = tf.contrib.layers.max_pool2d(h_conv1, 2, 2)
+
+        h_conv2 = tf.layers.conv2d(
+            inputs=pool_1,
+            filters=32,
+            kernel_size=[5, 5],
+            #strides=[2, 2],
+            padding="VALID",
+            activation=tf.nn.relu)
+
+        pool_2 = tf.contrib.layers.max_pool2d(h_conv2, 2, 2)
+
+        h_conv3 = tf.layers.conv2d(
+            inputs=pool_2,
+            filters=64,
+            kernel_size=[3, 3],
+            #strides=[2, 2],
+            padding="VALID",
+            activation=tf.nn.relu)
+
+        pool_3 = tf.contrib.layers.max_pool2d(h_conv3, 2, 2)
+
+        h_conv2_flat = tf.contrib.layers.flatten(pool_3)
         h_fc1 = tf.layers.dense(h_conv2_flat, 256, activation=tf.nn.relu)
 
         self.predictions = tf.layers.dense(h_fc1, num_actions, activation=None) # I THINK WE NEED TO ONE HOT
@@ -59,13 +73,6 @@ class NeuralNetwork():
         # Optimizer Parameters from original paper
         self.optimizer = tf.train.AdamOptimizer(lr)
         self.train_op = self.optimizer.minimize(self.loss)
-
-    def conv2d(self, x, W):
-        return tf.nn.conv2d(x, W, strides=[1, 2, 2, 1], padding='VALID')
-
-    def bias_variable(self, shape):
-        initial = tf.zeros(shape=shape)
-        return tf.Variable(initial)
 
     def predict(self, sess, states):
         """
@@ -101,8 +108,8 @@ class TargetNetwork(NeuralNetwork):
     Slowly updated target network. Tau indicates the speed of adjustment. If 1,
     it is always set to the values of its associate.
     """
-    def __init__(self, state_dim, num_actions, num_filters=32, filter_size=5, lr=1e-4, history_length=0, tau=0.01):
-        super().__init__(state_dim, num_actions)
+    def __init__(self, state_dim, num_actions, history_length, lr=1e-4, tau=0.01):
+        super().__init__(state_dim, num_actions, history_length)
         self.tau = tau
         self._associate = self._register_associate()
 

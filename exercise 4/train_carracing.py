@@ -11,8 +11,7 @@ from tensorboard_evaluation import *
 import itertools as it
 from utils import EpisodeStats
 
-
-def run_episode(env, agent, deterministic, skip_frames=1,  do_training=True, rendering=False, max_timesteps=1000, history_length=0):
+def run_episode(env, agent, deterministic, history_length, skip_frames=2,  do_training=True, rendering=True, max_timesteps=1000):
     """
     This methods runs one episode for a gym environment.
     deterministic == True => agent executes only greedy actions according the Q function approximator (no random actions).
@@ -56,12 +55,12 @@ def run_episode(env, agent, deterministic, skip_frames=1,  do_training=True, ren
             if terminal:
                  break
 #=============================IF NOT WORKING TRY REMOVING THIS==============================
-        early_done, punishment = agent.check_early_stop(reward, total_reward)
-        if early_done:
-            reward += punishment
-
-        terminal = terminal or early_done
-        total_reward += reward
+        #early_done, punishment = agent.check_early_stop(reward, total_reward)
+        #if early_done:
+        #    reward += punishment
+       # 
+        #terminal = terminal or early_done
+        #total_reward += reward
 #============================TILL HERE======================================================
         next_state = state_preprocessing(next_state)
         image_hist.append(next_state)
@@ -84,11 +83,11 @@ def action_id_to_action(action_id):
     if (action_id==0): a = np.array([0.0, 0.0, 0.0]).astype('float32')
     if (action_id==1): a = np.array([-1.0, 0.0, 0.0]).astype('float32')
     if (action_id==2): a = np.array([1.0, 0.0, 0.0]).astype('float32')
-    if (action_id==3): a = np.array([0.0, 1.0, 0.0]).astype('float32')
+    if (action_id==3): a = np.array([0.0, 0.8, 0.0]).astype('float32')
     if (action_id==4): a = np.array([0.0, 0.0, 0.2]).astype('float32')
     return a
 
-def train_online(env, agent, num_episodes, history_length=0, model_dir="./models_carracing", tensorboard_dir="./tensorboard"):
+def train_online(env, agent, num_episodes, history_length, model_dir="./models_carracing", tensorboard_dir="./tensorboard"):
 
     if not os.path.exists(model_dir):
         os.mkdir(model_dir)
@@ -96,15 +95,12 @@ def train_online(env, agent, num_episodes, history_length=0, model_dir="./models
     print("... train agent")
     tensorboard = Evaluation(os.path.join(tensorboard_dir, "train"), ["episode_reward", "straight", "left", "right", "accel", "brake"])
 
-    max_timesteps = 100
-    episodes_growth_factor = 2
-
     for i in range(num_episodes):
         print("epsiode %d" % i)
 
         # Hint: you can keep the episodes short in the beginning by changing max_timesteps (otherwise the car will spend most of the time out of the track)
-
-        stats = run_episode(env, agent, max_timesteps=max_timesteps, deterministic=False, do_training=True)
+        timesteps = int(np.max([300, i]))
+        stats = run_episode(env, agent, history_length=history_length, max_timesteps=timesteps, deterministic=False, do_training=True)
 
         tensorboard.write_episode_data(i, eval_dict={ "episode_reward" : stats.episode_reward,
                                                       "straight" : stats.get_action_usage(0),
@@ -116,10 +112,10 @@ def train_online(env, agent, num_episodes, history_length=0, model_dir="./models
 
         # TODO: evaluate agent with deterministic actions from time to time
         # ...
-        max_timesteps = max_timesteps*episodes_growth_factor
 
         if i % 100 == 0 or (i >= num_episodes - 1):
             agent.saver.save(agent.sess, os.path.join(model_dir, "dqn_agent.ckpt"))
+        
 
     tensorboard.close_session()
 
@@ -139,10 +135,11 @@ if __name__ == "__main__":
 
     state_dim = env.observation_space.shape[0]
     num_actions = 5
-    # num_episodes = 100
+    history_length = 3
+    
 
-    Q = NeuralNetwork(state_dim, num_actions)
-    Q_target = TargetNetwork(state_dim, num_actions)
+    Q = NeuralNetwork(state_dim, num_actions, history_length=history_length)
+    Q_target = TargetNetwork(state_dim, num_actions, history_length=history_length)
     agent = DQNAgent(Q, Q_target, num_actions)
 
-    train_online(env, agent, num_episodes=10, history_length=0, model_dir="./models_carracing")
+    train_online(env, agent, num_episodes=1000, history_length=history_length, model_dir="./models_carracing")

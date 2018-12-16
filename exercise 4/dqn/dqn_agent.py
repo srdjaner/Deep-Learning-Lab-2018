@@ -55,30 +55,8 @@ class DQNAgent:
             if not batch_dones[i]:
                 td_target = batch_rewards[i] + self.discount_factor * np.amax(self.Q_target.predict(self.sess, [batch_next_states[i]]))
             target_f = self.Q_target.predict(self.sess, [batch_states[i]])
-<<<<<<< HEAD
 
             target_f[0][batch_actions[i]] = td_target
-=======
-            # print("td target: ", td_target)
-            #print(target_f)
-            #print(target_f[0])
-            target_f[0][batch_actions[i]] = td_target
-
-            #print(target_f.shape)
-        #       2.1 compute td targets:
-<<<<<<< HEAD
-        td_targets =  batch_rewards + self.discount_factor * np.amax(self.Q_target.predict(self.sess, batch_next_states), axis=1)
-        # print("td_targets shape: ", td_targets.shape)
-        # print("amax: ", np.amax(self.Q_target.predict(self.sess, batch_next_states)))
-=======
-        #bb = np.amax(self.Q_target.predict(self.sess, batch_next_states), axis=1)
-        #print(bb)
-        #td_targets =  batch_rewards + self.discount_factor * bb
-
-        #print("amax: ", np.amax(self.Q_target.predict(self.sess, batch_next_states)))
->>>>>>> f113a8ac0cc5eb773feb8e52cff05e8744d45999
-        #       2.2 update the Q network
->>>>>>> 1506ec421f1c2f085d98693d91e0ac5860d6da63
             loss = self.Q.update(self.sess, [batch_states[i]], [batch_actions[i]], target_f[0]) #td_targets)
             self.Q_target.update(self.sess)
         #print("loss:", loss)

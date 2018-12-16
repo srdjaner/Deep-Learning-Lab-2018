@@ -5,6 +5,7 @@ from dqn_car.dqn_agent import DQNAgent
 from train_carracing import run_episode
 from dqn_car.networks import *
 import numpy as np
+import datetime
 
 np.random.seed(0)
 
@@ -12,15 +13,14 @@ if __name__ == "__main__":
 
     env = gym.make("CarRacing-v0").unwrapped
 
-    history_length =  0
-
     #TODO: Define networks and load agent
     # ....
     state_dim = env.observation_space.shape[0]
     num_actions = 5
+    history_length = 3
 
-    Q = NeuralNetwork(state_dim, num_actions)
-    Q_target = TargetNetwork(state_dim, num_actions)
+    Q = NeuralNetwork(state_dim, num_actions, history_length=history_length)
+    Q_target = TargetNetwork(state_dim, num_actions, history_length=history_length)
     agent = DQNAgent(Q, Q_target, num_actions)
     agent.load(os.path.join("./models_carracing/", "dqn_agent.ckpt"))
 
@@ -28,7 +28,7 @@ if __name__ == "__main__":
 
     episode_rewards = []
     for i in range(n_test_episodes):
-        stats = run_episode(env, agent, deterministic=True, do_training=False, rendering=True)
+        stats = run_episode(env, agent, history_length=history_length, deterministic=True, do_training=False, rendering=True, max_timesteps=10000)
         episode_rewards.append(stats.episode_reward)
 
     # save results in a dictionary and write them into a .json file
