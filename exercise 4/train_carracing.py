@@ -11,7 +11,7 @@ from tensorboard_evaluation import *
 import itertools as it
 from utils import EpisodeStats
 
-def run_episode(env, agent, deterministic, history_length, skip_frames=2,  do_training=True, rendering=True, max_timesteps=1000):
+def run_episode(env, agent, deterministic, history_length, skip_frames=2,  do_training=True, rendering=True, max_timesteps=1000, test=False):
     """
     This methods runs one episode for a gym environment.
     deterministic == True => agent executes only greedy actions according the Q function approximator (no random actions).
@@ -35,11 +35,18 @@ def run_episode(env, agent, deterministic, history_length, skip_frames=2,  do_tr
     image_hist.extend([state] * (history_length + 1))
     state = np.array(image_hist).reshape(96, 96, history_length + 1)
 
+    counter = 7
+
     while True:
 
         # TODO: get action_id from agent
         # Hint: adapt the probabilities of the 5 actions for random sampling so that the agent explores properly.
         action_id = agent.act(state=state, deterministic=deterministic)
+
+        if test and counter>0:
+            action_id = 3
+            counter -= 1
+
         action = action_id_to_action(action_id)
 
         # Hint: frame skipping might help you to get better results.
@@ -54,14 +61,6 @@ def run_episode(env, agent, deterministic, history_length, skip_frames=2,  do_tr
 
             if terminal:
                  break
-#=============================IF NOT WORKING TRY REMOVING THIS==============================
-        #early_done, punishment = agent.check_early_stop(reward, total_reward)
-        #if early_done:
-        #    reward += punishment
-       # 
-        #terminal = terminal or early_done
-        #total_reward += reward
-#============================TILL HERE======================================================
         next_state = state_preprocessing(next_state)
         image_hist.append(next_state)
         image_hist.pop(0)
@@ -83,7 +82,7 @@ def action_id_to_action(action_id):
     if (action_id==0): a = np.array([0.0, 0.0, 0.0]).astype('float32')
     if (action_id==1): a = np.array([-1.0, 0.0, 0.0]).astype('float32')
     if (action_id==2): a = np.array([1.0, 0.0, 0.0]).astype('float32')
-    if (action_id==3): a = np.array([0.0, 0.8, 0.0]).astype('float32')
+    if (action_id==3): a = np.array([0.0, 1.2, 0.0]).astype('float32')
     if (action_id==4): a = np.array([0.0, 0.0, 0.2]).astype('float32')
     return a
 
@@ -93,25 +92,25 @@ def train_online(env, agent, num_episodes, history_length, model_dir="./models_c
         os.mkdir(model_dir)
 
     print("... train agent")
-    tensorboard = Evaluation(os.path.join(tensorboard_dir, "train"), ["episode_reward", "straight", "left", "right", "accel", "brake"])
+    tensorboard = Evaluation(os.path.join(tensorboard_dir, "train"), ["episode_reward", "valid_episode_reward", "straight", "left", "right", "accel", "brake"])
 
     for i in range(num_episodes):
         print("epsiode %d" % i)
-
-        # Hint: you can keep the episodes short in the beginning by changing max_timesteps (otherwise the car will spend most of the time out of the track)
         timesteps = int(np.max([300, i]))
         stats = run_episode(env, agent, history_length=history_length, max_timesteps=timesteps, deterministic=False, do_training=True)
-
-        tensorboard.write_episode_data(i, eval_dict={ "episode_reward" : stats.episode_reward,
-                                                      "straight" : stats.get_action_usage(0),
-                                                      "left" : stats.get_action_usage(1),
-                                                      "right" : stats.get_action_usage(2),
-                                                      "accel" : stats.get_action_usage(3),
-                                                      "brake" : stats.get_action_usage(4)
-                                                      })
-
-        # TODO: evaluate agent with deterministic actions from time to time
-        # ...
+        if i % 50 == 0:
+            valid_reward = 0
+            for j in range(5):
+                valid_stats = run_episode(env, agent, deterministic=True, do_training=False, test=True)
+                valid_reward += valid_stats.episode_reward
+            tensorboard.write_episode_data(i, eval_dict={ "episode_reward" : stats.episode_reward,
+                                                              "valid_episode_reward" : valid_reward/5,
+                                                              "straight" : stats.get_action_usage(0),
+                                                              "left" : stats.get_action_usage(1),
+                                                              "right" : stats.get_action_usage(2),
+                                                              "accel" : stats.get_action_usage(3),
+                                                              "brake" : stats.get_action_usage(4)
+                                                            })
 
         if i % 100 == 0 or (i >= num_episodes - 1):
             agent.saver.save(agent.sess, os.path.join(model_dir, "dqn_agent.ckpt"))

@@ -96,19 +96,3 @@ class DQNAgent:
     def load(self, file_name):
         self.saver.restore(self.sess, file_name)
 
-    def check_early_stop(self, reward, totalreward):
-        if reward < 0:
-            self.neg_reward_counter += 1
-            done = (self.neg_reward_counter > self.max_neg_rewards)
-
-            if done and totalreward <= 500:
-                punishment = -20.0
-            else:
-                punishment = 0.0
-            if done:
-                self.neg_reward_counter = 0
-
-            return done, punishment
-        else:
-            self.neg_reward_counter = 0
-            return False, 0.0

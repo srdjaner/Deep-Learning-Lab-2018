@@ -58,8 +58,9 @@ class NeuralNetwork():
 
         h_conv2_flat = tf.contrib.layers.flatten(pool_3)
         h_fc1 = tf.layers.dense(h_conv2_flat, 256, activation=tf.nn.relu)
+        #fc1_drop = tf.nn.dropout(h_fc1, 0.8)
 
-        self.predictions = tf.layers.dense(h_fc1, num_actions, activation=None) # I THINK WE NEED TO ONE HOT
+        self.predictions = tf.layers.dense(h_fc1, num_actions, activation=None)
 
         # Get the predictions for the chosen actions only
         batch_size = tf.shape(self.states_)[0]

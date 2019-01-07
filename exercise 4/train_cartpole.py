@@ -47,17 +47,22 @@ def train_online(env, agent, num_episodes, model_dir="./models_cartpole", tensor
 
     print("... train agent")
 
-    tensorboard = Evaluation(os.path.join(tensorboard_dir, "train"), ["episode_reward", "a_0", "a_1"])
+    tensorboard = Evaluation(os.path.join(tensorboard_dir, "train"), ["episode_reward", "valid_episode_reward", "a_0", "a_1"])
 
     # training
     for i in range(num_episodes):
         print("episode: ",i)
         stats_training = run_episode(env, agent, deterministic=False, do_training=True)
         if i % 10 == 0:
+            valid_reward = 0
+            for j in range(5):
+                valid_stats = run_episode(env, agent, deterministic=True, do_training=False)
+                valid_reward += valid_stats.episode_reward
             #stats_eval = run_episode(env, agent, deterministic=True, do_training=False)
-            tensorboard.write_episode_data(i, eval_dict={  "episode_reward" : stats_training.episode_reward,
-                                                                "a_0" : stats_training.get_action_usage(0),
-                                                                "a_1" : stats_training.get_action_usage(1)})
+            tensorboard.write_episode_data(i, eval_dict={"episode_reward" : stats_training.episode_reward,
+                                                         "valid_episode_reward" : valid_reward/5,
+                                                         "a_0" : stats_training.get_action_usage(0),
+                                                         "a_1" : stats_training.get_action_usage(1)})
 
         # TODO: evaluate your agent once in a while for some episodes using run_episode(env, agent, deterministic=True, do_training=False) to
         # check its performance with greedy actions only. You can also use tensorboard to plot the mean episode reward.
